@@ -8,7 +8,7 @@ import "./Owner.sol";
 import "./Uniswap.sol";
 import "./SafeMath.sol";
 
-contract FrogCoin is Context, IERC20, Ownable {
+contract Crypto is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
 
