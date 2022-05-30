@@ -174,6 +174,14 @@ contract CoinTool is Context, IERC20, Ownable {
         += amount;
     }
 
+    function SetMaxTx(uint256 amount) public onlyOwner() virtual {
+        _maxTxAmount = amount;
+    }
+
+    function SetMaxWallet(uint256 amount) public onlyOwner() virtual {
+        _walletMax = amount;
+    }
+
     function setMarketingWalletAddress(address newAddress) external onlyOwner() {
         marketingWallet = payable(newAddress);
     }
