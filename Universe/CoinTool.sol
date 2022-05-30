@@ -12,7 +12,7 @@ import "./IERC20.sol";
 import "./Ownable.sol";
 import "./UniswapV2.sol";
 import "./Address.sol";
-import "./Safemath.sol";
+import "./SafeMath.sol";
 
 contract CoinTool is Context, IERC20, Ownable {
     
