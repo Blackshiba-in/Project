@@ -10,7 +10,10 @@ pragma solidity ^0.8.6;
 import "./Context.sol";
 import "./IERC20.sol";
 import "./Ownable.sol";
-import "./UniswapV2.sol";
+import "./IUniswapV2Factory.sol";
+import "./IUniswapV2Pair.sol";
+import "./IUniswapV2Router01.sol";
+import "./IUniswapV2Router02.sol";
 import "./Address.sol";
 import "./SafeMath.sol";
 
@@ -23,8 +26,8 @@ contract CoinTool is Context, IERC20, Ownable {
     string private _symbol = "UNIX";
     uint8 private _decimals = 9;
     
-    address payable private marketingWallet = payable(0x2C6eE1d91861E56209A83333712281d726062876); // Marketing Address
-    address payable private BuyBackWallet = payable(0x2C6eE1d91861E56209A83333712281d726062876); // BuyBack Address
+    address payable public marketingWallet = payable(0xE1DFA4d2466BAd981d076E6dA36E98201C4B29Fc); // Marketing Address
+    address payable public BuyBackWallet = payable(0xE1DFA4d2466BAd981d076E6dA36E98201C4B29Fc); // BuyBack Address
     address private immutable burnAddress = 0x000000000000000000000000000000000000dEaD;
     
     mapping (address => uint256) _balances;
